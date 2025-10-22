@@ -29,6 +29,8 @@ func decodeVideo(data []byte) Video {
 	curRow := 0
 	curCol := 0
 
+	colors := map[string]color.RGBA{}
+
 	for i := range len(lines) {
 		line := lines[i]
 		spline := strings.Split(line, " ")
@@ -85,16 +87,14 @@ func decodeVideo(data []byte) Video {
 
 			video.delay = delay
 
-		default:
-			if initialised != 0 {
-				panic("Attempted to start writing frame data when uninitialised")
+		case "COLOR":
+			if len(spline) != 5 {
+				panic("Invalid color definition")
 			}
 
-			if len(spline) != 3 {
-				panic("Invalid number of args for RGB pixel")
-			}
+			name := spline[1]
 
-			rawR, err := strconv.Atoi(spline[0])
+			rawR, err := strconv.Atoi(spline[2])
 			if err != nil {
 				fmt.Println("Invalid red")
 				panic(err)
@@ -103,7 +103,7 @@ func decodeVideo(data []byte) Video {
 				panic("Invalid red")
 			}
 
-			rawG, err := strconv.Atoi(spline[1])
+			rawG, err := strconv.Atoi(spline[3])
 			if err != nil {
 				fmt.Println("Invalid green")
 				panic(err)
@@ -112,7 +112,7 @@ func decodeVideo(data []byte) Video {
 				panic("Invalid green")
 			}
 
-			rawB, err := strconv.Atoi(spline[2])
+			rawB, err := strconv.Atoi(spline[4])
 			if err != nil {
 				fmt.Println("Invalid blue")
 				panic(err)
@@ -126,6 +126,59 @@ func decodeVideo(data []byte) Video {
 			b := byte(rawB)
 
 			clr := color.RGBA{r, g, b, 255}
+
+			colors[name] = clr
+
+		default:
+			if initialised != 0 {
+				panic("Attempted to start writing frame data when uninitialised")
+			}
+
+			var clr color.RGBA
+
+			// Just a quick name
+			if len(spline) == 1 {
+				var ok bool
+				clr, ok = colors[spline[0]]
+				if !ok {
+					panic("Invalid colour name")
+				}
+			} else if len(spline) != 3 {
+				panic("Invalid number of args for RGB pixel")
+			} else {
+				rawR, err := strconv.Atoi(spline[0])
+				if err != nil {
+					fmt.Println("Invalid red")
+					panic(err)
+				}
+				if rawR < 0 || rawR >= 256 {
+					panic("Invalid red")
+				}
+
+				rawG, err := strconv.Atoi(spline[1])
+				if err != nil {
+					fmt.Println("Invalid green")
+					panic(err)
+				}
+				if rawG < 0 || rawG >= 256 {
+					panic("Invalid green")
+				}
+
+				rawB, err := strconv.Atoi(spline[2])
+				if err != nil {
+					fmt.Println("Invalid blue")
+					panic(err)
+				}
+				if rawB < 0 || rawB >= 256 {
+					panic("Invalid blue")
+				}
+
+				r := byte(rawR)
+				g := byte(rawG)
+				b := byte(rawB)
+
+				clr = color.RGBA{r, g, b, 255}
+			}
 
 			curCol++
 			if curCol == video.screenWidth {
