@@ -7,4 +7,4 @@ prod:
 		go build -o "dev.exe" -ldflags "-w -s"
 
 run:
-		dev "test.ptv"
+		dev "examples/test.ptv"

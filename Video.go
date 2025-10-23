@@ -75,7 +75,7 @@ func decodeVideo(data []byte) Video {
 			initialised--
 
 		case "DELAY":
-			delay, err := strconv.Atoi(spline[1])
+			delay, err := strconv.ParseFloat(spline[1], 64)
 			if err != nil {
 				fmt.Println("Invalid delay")
 				panic(err)
@@ -85,7 +85,8 @@ func decodeVideo(data []byte) Video {
 				panic("Invalid delay")
 			}
 
-			video.delay = delay
+			// Convert to number of frames
+			video.delay = int(60.0*delay)
 
 		case "COLOR":
 			if len(spline) != 5 {
